@@ -6,6 +6,14 @@ from flask_login import login_required, current_user
 from app.models import Dataset, ActivityLog
 from app import db
 import pandas as pd
+import os
+from supabase import create_client, Client
+
+url: str = os.environ.get("SUPABASE_URL")
+key: str = os.environ.get("SUPABASE_KEY")
+supabase: Client = create_client(url, key)
+
+# ... your @bp.route('/process/1') goes below here ...
 
 preprocessing_bp = Blueprint('preprocessing', __name__, url_prefix='/preprocessing')
 
