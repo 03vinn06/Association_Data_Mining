@@ -10,7 +10,7 @@ from app import db
 # Initialize Supabase client
 # (If you already initialize this in app.py or extensions.py, replace these 3 lines with: from app import supabase)
 supabase_url = os.environ.get("SUPABASE_URL")
-supabase_key = os.environ.get("SUPABASE_KEY")
+supabase_key = os.environ.get('SUPABASE_SERVICE_KEY')
 supabase: Client = create_client(supabase_url, supabase_key)
 
 preprocessing_bp = Blueprint('preprocessing', __name__, url_prefix='/preprocessing')
