@@ -12,6 +12,15 @@ import seaborn as sns
 import numpy as np
 import os
 import json
+import io
+import os
+import pandas as pd
+from supabase import create_client, Client
+# ... your other imports ...
+
+supabase_url = os.environ.get("SUPABASE_URL")
+supabase_key = os.environ.get('SUPABASE_SERVICE_KEY')
+supabase: Client = create_client(supabase_url, supabase_key)
 
 eda_bp = Blueprint('eda', __name__, url_prefix='/eda')
 
