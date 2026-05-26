@@ -39,9 +39,6 @@ def index():
 @login_required
 def generate():
     """Generate association rules"""
-    min_support = request.args.get('min_support', 0.20, type=float)
-    min_confidence = request.args.get('min_confidence', 0.50, type=float)
-    min_lift = request.args.get('min_lift', 1.0, type=float)
     dataset_id = request.form.get('dataset_id', type=int)
     algorithm = request.form.get('algorithm', 'apriori')
     min_support = request.form.get('min_support', 0.20, type=float)
