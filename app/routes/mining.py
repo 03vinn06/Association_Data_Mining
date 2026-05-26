@@ -14,6 +14,13 @@ from mlxtend.frequent_patterns import apriori, fpgrowth
 from mlxtend.preprocessing import TransactionEncoder
 import json
 import os
+import io
+from supabase import create_client, Client
+# ... your other imports ...
+
+supabase_url = os.environ.get("SUPABASE_URL")
+supabase_key = os.environ.get('SUPABASE_SERVICE_KEY')
+supabase: Client = create_client(supabase_url, supabase_key)
 
 mining_bp = Blueprint('mining', __name__, url_prefix='/mining')
 
@@ -44,7 +51,14 @@ def run():
         return redirect(url_for('mining.index'))
 
     # Load and prepare data
-    df = pd.read_csv(dataset.filepath)
+    # 1. Download the file data directly from your Supabase bucket
+    file_data = supabase.storage.from_('csv-uploads').download(dataset.filepath)
+    
+    # 2. Convert the byte data into an in-memory stream
+    memory_file = io.BytesIO(file_data)
+    
+    # 3. Read it into Pandas directly from memory
+    df = pd.read_csv(memory_file)
     transactions = []
     for items_str in df['Items']:
         items = [i.strip() for i in str(items_str).split(',')]
