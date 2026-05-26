@@ -8,6 +8,7 @@ from app import db
 import pandas as pd
 import json
 import os
+import io
 from datetime import datetime
 
 reports_bp = Blueprint('reports', __name__, url_prefix='/reports')
@@ -33,22 +34,23 @@ def generate_csv(result_id):
         flash('Access denied.', 'danger')
         return redirect(url_for('reports.index'))
 
-    reports_dir = current_app.config['REPORTS_FOLDER']
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-
     if result.rules_json:
         rules = json.loads(result.rules_json)
         df_rules = pd.DataFrame(rules)
-        filepath = os.path.join(reports_dir, f'rules_report_{timestamp}.csv')
-        df_rules.to_csv(filepath, index=False)
+        
+        # --- FIX: Write CSV to memory buffer ---
+        csv_buffer = io.BytesIO()
+        df_rules.to_csv(csv_buffer, index=False)
+        csv_buffer.seek(0) # Reset pointer to the beginning of the file
 
         log = ActivityLog(user_id=current_user.id, action='Export CSV',
                           details=f'Exported rules for {dataset.name}')
         db.session.add(log)
         db.session.commit()
 
-        return send_file(filepath, as_attachment=True,
-                         download_name=f'association_rules_{dataset.name}.csv')
+        return send_file(csv_buffer, as_attachment=True,
+                         download_name=f'association_rules_{dataset.name}.csv',
+                         mimetype='text/csv')
 
     flash('No rules data available.', 'warning')
     return redirect(url_for('reports.index'))
@@ -64,11 +66,10 @@ def generate_excel(result_id):
         flash('Access denied.', 'danger')
         return redirect(url_for('reports.index'))
 
-    reports_dir = current_app.config['REPORTS_FOLDER']
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    filepath = os.path.join(reports_dir, f'report_{timestamp}.xlsx')
+    # --- FIX: Write Excel to memory buffer ---
+    excel_buffer = io.BytesIO()
 
-    with pd.ExcelWriter(filepath, engine='openpyxl') as writer:
+    with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
         # Sheet 1: Dataset Summary
         summary_data = {
             'Metric': ['Dataset Name', 'Algorithm', 'Min Support', 'Min Confidence',
@@ -90,17 +91,17 @@ def generate_excel(result_id):
             rules = json.loads(result.rules_json)
             pd.DataFrame(rules).to_excel(writer, sheet_name='Association Rules', index=False)
 
-        # Sheet 4: Original Dataset
-        df_original = pd.read_csv(dataset.filepath)
-        df_original.to_excel(writer, sheet_name='Dataset', index=False)
+    # Note: the writer must be closed (which the 'with' block does) before reading the buffer
+    excel_buffer.seek(0)
 
     log = ActivityLog(user_id=current_user.id, action='Export Excel',
                       details=f'Exported full report for {dataset.name}')
     db.session.add(log)
     db.session.commit()
 
-    return send_file(filepath, as_attachment=True,
-                     download_name=f'ARM_Report_{dataset.name}.xlsx')
+    return send_file(excel_buffer, as_attachment=True,
+                     download_name=f'ARM_Report_{dataset.name}.xlsx',
+                     mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
 
 @reports_bp.route('/generate/pdf/<int:result_id>')
@@ -120,11 +121,10 @@ def generate_pdf(result_id):
         from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
         from reportlab.lib.units import inch
 
-        reports_dir = current_app.config['REPORTS_FOLDER']
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filepath = os.path.join(reports_dir, f'report_{timestamp}.pdf')
-
-        doc = SimpleDocTemplate(filepath, pagesize=A4)
+        # --- FIX: Write PDF to memory buffer ---
+        pdf_buffer = io.BytesIO()
+        doc = SimpleDocTemplate(pdf_buffer, pagesize=A4)
+        
         styles = getSampleStyleSheet()
         elements = []
 
@@ -168,14 +168,16 @@ def generate_pdf(result_id):
             elements.append(table)
 
         doc.build(elements)
+        pdf_buffer.seek(0) # Reset pointer to the beginning of the file
 
         log = ActivityLog(user_id=current_user.id, action='Export PDF',
                           details=f'Exported PDF for {dataset.name}')
         db.session.add(log)
         db.session.commit()
 
-        return send_file(filepath, as_attachment=True,
-                         download_name=f'ARM_Report_{dataset.name}.pdf')
+        return send_file(pdf_buffer, as_attachment=True,
+                         download_name=f'ARM_Report_{dataset.name}.pdf',
+                         mimetype='application/pdf')
 
     except ImportError:
         flash('PDF generation requires reportlab. Install with: pip install reportlab', 'warning')
