@@ -32,13 +32,13 @@
     <div class="col-lg-6">
         <div class="chart-container">
             <h6><i class="fas fa-braille me-2"></i>Support vs Confidence</h6>
-            <img src="{{ url_for('static', filename=charts.scatter) }}" alt="Scatter Plot">
+            <img src="{{ charts.scatter }}" alt="Scatter Plot" class="img-fluid">
         </div>
     </div>
     <div class="col-lg-6">
         <div class="chart-container">
             <h6><i class="fas fa-sort-amount-up me-2"></i>Top Rules by Lift</h6>
-            <img src="{{ url_for('static', filename=charts.lift) }}" alt="Lift Chart">
+            <img src="{{ charts.lift }}" alt="Lift Chart" class="img-fluid">
         </div>
     </div>
 </div>
