@@ -20,7 +20,7 @@ import base64
 from supabase import create_client, Client
 
 supabase_url = os.environ.get("SUPABASE_URL")
-supabase_key = os.environ.get('SUPABASE_KEY') # Make sure this is exactly your Vercel ENV name
+supabase_key = os.environ.get('SUPABASE_SERVICE_KEY')
 supabase: Client = create_client(supabase_url, supabase_key)
 
 visualization_bp = Blueprint('visualization', __name__, url_prefix='/visualization')
