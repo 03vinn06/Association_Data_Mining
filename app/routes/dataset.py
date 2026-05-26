@@ -3,6 +3,7 @@ Dataset Management Routes - Upload, View, Delete CSV datasets
 """
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required, current_user
+from supabase import create_client
 from app.models import Dataset, ActivityLog
 from app import db
 import pandas as pd
@@ -11,6 +12,10 @@ from werkzeug.utils import secure_filename
 
 dataset_bp = Blueprint('dataset', __name__, url_prefix='/dataset')
 
+def get_supabase():
+    url = os.environ.get('SUPABASE_URL')
+    key = os.environ.get('SUPABASE_SERVICE_KEY')
+    return create_client(url, key)
 
 def allowed_file(filename):
     """Check if file extension is allowed"""
@@ -62,7 +67,29 @@ def upload():
             return redirect(request.url)
 
         if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
+            # Read file bytes
+            file_bytes = file.read()
+            
+            # Upload to Supabase Storage
+            supabase = get_supabase()
+            storage_path = f'uploads/{timestamp}_{filename}'
+            supabase.storage.from_('csv-uploads').upload(
+                storage_path,
+                file_bytes,
+                {'content-type': 'text/csv'}
+            )
+            
+            # Write temp copy to /tmp for immediate processing
+            tmp_path = f'/tmp/{timestamp}_{filename}'
+            with open(tmp_path, 'wb') as f:
+                f.write(file_bytes)
+            
+            # Save storage_path (not local path) in DB
+            dataset = Dataset(
+                ...
+                filepath=storage_path,  # Supabase path
+            )
+
             # Add timestamp to avoid conflicts
             import time
             timestamp = str(int(time.time()))
