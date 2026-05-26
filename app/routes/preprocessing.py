@@ -28,7 +28,15 @@ def process(dataset_id):
         flash('Access denied.', 'danger')
         return redirect(url_for('preprocessing.index'))
 
-    df = pd.read_csv(dataset.filepath)
+        # 1. Download the file data directly from your Supabase bucket
+    # Note: 'dataset.filepath' should be the path within the bucket (e.g., 'uploads/1779815642_grocery_transactions.csv')
+    file_data = supabase.storage.from_('csv-uploads').download(dataset.filepath)
+    
+    # 2. Convert the byte data into an in-memory stream
+    memory_file = io.BytesIO(file_data)
+    
+    # 3. Read it into Pandas directly from memory
+    df = pd.read_csv(memory_file)
     original_count = len(df)
     steps = []
 
