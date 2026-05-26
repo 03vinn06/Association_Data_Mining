@@ -1,30 +1,26 @@
-"""
-Association Rule Generation Routes
-"""
-from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
-from flask_login import login_required, current_user
-from app.models import Dataset, MiningResult, ActivityLog
-from app import db
+import io
+import os
+import json
+import base64
 import pandas as pd
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import seaborn as sns
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
+from flask_login import login_required, current_user
+from supabase import create_client, Client
 from mlxtend.frequent_patterns import apriori, fpgrowth, association_rules
 from mlxtend.preprocessing import TransactionEncoder
-import json
-import os
-import io
-from supabase import create_client, Client
-# ... your other imports ...
+from app.models import Dataset, MiningResult, ActivityLog
+from app import db
 
+# Initialize Supabase client
 supabase_url = os.environ.get("SUPABASE_URL")
 supabase_key = os.environ.get('SUPABASE_SERVICE_KEY')
 supabase: Client = create_client(supabase_url, supabase_key)
 
 rules_bp = Blueprint('rules', __name__, url_prefix='/rules')
-
 
 @rules_bp.route('/')
 @login_required
@@ -54,14 +50,11 @@ def generate():
         flash('Access denied.', 'danger')
         return redirect(url_for('rules.index'))
 
-    # 1. Download the file data directly from your Supabase bucket
+    # 1. Download from Supabase into memory
     file_data = supabase.storage.from_('csv-uploads').download(dataset.filepath)
-    
-    # 2. Convert the byte data into an in-memory stream
     memory_file = io.BytesIO(file_data)
-    
-    # 3. Read it into Pandas directly from memory
     df = pd.read_csv(memory_file)
+    
     transactions = []
     for items_str in df['Items']:
         items = [i.strip() for i in str(items_str).split(',')]
@@ -82,10 +75,9 @@ def generate():
             flash('No frequent itemsets found. Lower the support threshold.', 'warning')
             return redirect(url_for('rules.index'))
 
-        # Generate rules
+        # --- FIX 1: Removed 'num_itemsets' to prevent the crash ---
         rules = association_rules(frequent_itemsets, metric="confidence",
-                                  min_threshold=min_confidence,
-                                  num_itemsets=len(frequent_itemsets))
+                                  min_threshold=min_confidence)
 
         if rules.empty:
             flash('No rules generated. Try lowering confidence threshold.', 'warning')
@@ -132,8 +124,7 @@ def generate():
         db.session.add(log)
         db.session.commit()
 
-        # Generate charts
-        charts_dir = current_app.config['CHARTS_FOLDER']
+        # --- FIX 2: Save Matplotlib charts to Base64 Memory Buffers ---
 
         # Chart 1: Support vs Confidence
         fig, ax = plt.subplots(figsize=(10, 7))
@@ -145,8 +136,11 @@ def generate():
         ax.set_ylabel('Confidence', fontsize=12, fontweight='bold')
         ax.set_title('Association Rules: Support vs Confidence', fontsize=14, fontweight='bold')
         plt.tight_layout()
-        plt.savefig(os.path.join(charts_dir, f'rules_scatter_{dataset_id}.png'), dpi=150)
+        
+        scatter_buf = io.BytesIO()
+        plt.savefig(scatter_buf, format='png', dpi=150)
         plt.close()
+        scatter_b64 = base64.b64encode(scatter_buf.getvalue()).decode('utf-8')
 
         # Chart 2: Top Rules by Lift
         fig, ax = plt.subplots(figsize=(12, 7))
@@ -163,12 +157,16 @@ def generate():
         ax.axvline(x=1, color='red', linestyle='--', label='Lift = 1')
         ax.legend()
         plt.tight_layout()
-        plt.savefig(os.path.join(charts_dir, f'rules_lift_{dataset_id}.png'), dpi=150)
+        
+        lift_buf = io.BytesIO()
+        plt.savefig(lift_buf, format='png', dpi=150)
         plt.close()
+        lift_b64 = base64.b64encode(lift_buf.getvalue()).decode('utf-8')
 
+        # Pass the Data URIs directly to the HTML template
         charts = {
-            'scatter': f'charts/rules_scatter_{dataset_id}.png',
-            'lift': f'charts/rules_lift_{dataset_id}.png'
+            'scatter': f"data:image/png;base64,{scatter_b64}",
+            'lift': f"data:image/png;base64,{lift_b64}"
         }
 
         stats = {
