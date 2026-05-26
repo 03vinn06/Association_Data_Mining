@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Preprocessing{% endblock %}
+{% block page_title %}Data Preprocessing{% endblock %}
+
+{% block content %}
+<div class="card content-card">
+    <div class="card-header">
+        <i class="fas fa-broom me-2"></i>Select Dataset to Preprocess
+    </div>
+    <div class="card-body">
+        <p class="text-muted">Preprocessing will automatically clean your dataset by removing duplicates,
+        handling missing values, and standardizing item names.</p>
+
+        {% if datasets %}
+        <div class="list-group">
+            {% for ds in datasets %}
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>{{ ds.name }}</strong>
+                    <br><small class="text-muted">{{ ds.total_transactions }} transactions | Uploaded: {{ ds.uploaded_at.strftime('%Y-%m-%d') }}</small>
+                </div>
+                <div>
+                    {% if ds.is_preprocessed %}
+                    <span class="badge bg-success me-2"><i class="fas fa-check"></i> Preprocessed</span>
+                    {% endif %}
+                    <a href="{{ url_for('preprocessing.process', dataset_id=ds.id) }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-play me-1"></i>{% if ds.is_preprocessed %}Re-process{% else %}Process{% endif %}
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <p class="text-muted">No datasets available. Upload a dataset first.</p>
+            <a href="{{ url_for('dataset.upload') }}" class="btn btn-primary">Upload Dataset</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

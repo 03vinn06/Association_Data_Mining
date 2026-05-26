@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Datasets{% endblock %}
+{% block page_title %}Dataset Management{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 class="mb-0">Uploaded Datasets</h5>
+    <a href="{{ url_for('dataset.upload') }}" class="btn btn-primary">
+        <i class="fas fa-upload me-2"></i>Upload New Dataset
+    </a>
+</div>
+
+{% if datasets %}
+<div class="card content-card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Dataset Name</th>
+                        <th>Transactions</th>
+                        <th>Unique Items</th>
+                        <th>Preprocessed</th>
+                        <th>Uploaded</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ds in datasets %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ ds.name }}</strong></td>
+                        <td><span class="badge bg-primary">{{ ds.total_transactions }}</span></td>
+                        <td><span class="badge bg-success">{{ ds.total_items }}</span></td>
+                        <td>
+                            {% if ds.is_preprocessed %}
+                            <span class="badge bg-success"><i class="fas fa-check"></i> Yes</span>
+                            {% else %}
+                            <span class="badge bg-warning"><i class="fas fa-times"></i> No</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ ds.uploaded_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            <a href="{{ url_for('dataset.view', dataset_id=ds.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <form method="POST" action="{{ url_for('dataset.delete', dataset_id=ds.id) }}"
+                                  style="display:inline" id="delete-{{ ds.id }}">
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                        onclick="confirmDelete('delete-{{ ds.id }}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card content-card">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-database fa-4x text-muted mb-3"></i>
+        <h5>No Datasets Uploaded</h5>
+        <p class="text-muted">Upload a CSV file to begin your market basket analysis.</p>
+        <a href="{{ url_for('dataset.upload') }}" class="btn btn-primary">
+            <i class="fas fa-upload me-2"></i>Upload Dataset
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

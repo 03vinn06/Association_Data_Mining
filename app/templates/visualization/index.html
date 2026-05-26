@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Visualizations{% endblock %}
+{% block page_title %}Data Visualizations{% endblock %}
+
+{% block content %}
+<div class="card content-card">
+    <div class="card-header"><i class="fas fa-chart-area me-2"></i>Generate Advanced Visualizations</div>
+    <div class="card-body">
+        {% if datasets %}
+        <p class="text-muted">Select a dataset to generate network graphs, correlation matrices, bubble charts, and more.</p>
+        <div class="list-group">
+            {% for ds in datasets %}
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>{{ ds.name }}</strong>
+                    <br><small class="text-muted">{{ ds.total_transactions }} transactions</small>
+                </div>
+                <a href="{{ url_for('visualization.generate', dataset_id=ds.id) }}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-magic me-1"></i>Generate Charts
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted text-center">No preprocessed datasets available.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

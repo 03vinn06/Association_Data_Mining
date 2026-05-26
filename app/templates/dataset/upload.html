@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Upload Dataset{% endblock %}
+{% block page_title %}Upload New Dataset{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card content-card">
+            <div class="card-header">
+                <i class="fas fa-upload me-2"></i>Upload CSV Dataset
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" action="{{ url_for('dataset.upload') }}">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Dataset Name</label>
+                        <input type="text" class="form-control" name="name"
+                               placeholder="e.g., Grocery Store Transactions" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">CSV File</label>
+                        <input type="file" class="form-control" name="file" accept=".csv" required>
+                        <small class="text-muted">Maximum file size: 16MB</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload me-2"></i>Upload Dataset
+                    </button>
+                    <a href="{{ url_for('dataset.index') }}" class="btn btn-outline-secondary ms-2">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card content-card">
+            <div class="card-header">
+                <i class="fas fa-info-circle me-2"></i>CSV Format Requirements
+            </div>
+            <div class="card-body">
+                <p class="small"><strong>Required Columns:</strong></p>
+                <ul class="small">
+                    <li><code>Transaction_ID</code> - Unique transaction identifier</li>
+                    <li><code>Items</code> - Comma-separated list of purchased items</li>
+                </ul>
+                <p class="small"><strong>Example:</strong></p>
+                <pre class="bg-light p-2 rounded small">Transaction_ID,Items
+T001,"Bread, Milk, Eggs"
+T002,"Rice, Coffee, Sugar"
+T003,"Milk, Bread, Butter"</pre>
+                <p class="small text-muted mb-0">
+                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                    Minimum 10 transactions required.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

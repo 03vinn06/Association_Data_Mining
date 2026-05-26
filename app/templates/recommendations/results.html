@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Recommendations{% endblock %}
+{% block page_title %}Business Recommendations: {{ dataset.name }}{% endblock %}
+
+{% block content %}
+<!-- Product Bundles -->
+<div class="card content-card mb-4">
+    <div class="card-header bg-success text-white">
+        <i class="fas fa-box-open me-2"></i>Product Bundle Recommendations
+    </div>
+    <div class="card-body">
+        {% for bundle in recommendations.bundles %}
+        <div class="rec-card bundle">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <h6 class="mb-1"><i class="fas fa-gift me-2 text-success"></i>{{ bundle.items }}</h6>
+                    <p class="text-muted small mb-0">{{ bundle.reason }}</p>
+                </div>
+                <span class="badge bg-success h-100">Score: {{ bundle.score }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Cross-Selling -->
+<div class="card content-card mb-4">
+    <div class="card-header bg-warning text-dark">
+        <i class="fas fa-exchange-alt me-2"></i>Cross-Selling Suggestions
+    </div>
+    <div class="card-body">
+        {% for cs in recommendations.cross_selling %}
+        <div class="rec-card cross-sell">
+            <h6 class="mb-1">
+                When customer buys <strong class="text-primary">{{ cs.trigger }}</strong>,
+                suggest <strong class="text-success">{{ cs.suggest }}</strong>
+            </h6>
+            <p class="text-muted small mb-0">{{ cs.reason }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Store Layout -->
+<div class="card content-card mb-4">
+    <div class="card-header" style="background: #7B1FA2; color: white;">
+        <i class="fas fa-store me-2"></i>Store Layout Suggestions
+    </div>
+    <div class="card-body">
+        {% for layout in recommendations.store_layout %}
+        <div class="rec-card layout">
+            <h6 class="mb-1"><i class="fas fa-map-marker-alt me-2 text-purple"></i>{{ layout.suggestion }}</h6>
+            <p class="text-muted small mb-0">{{ layout.reason }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Promotions -->
+<div class="card content-card mb-4">
+    <div class="card-header bg-danger text-white">
+        <i class="fas fa-tags me-2"></i>Promotional Strategies
+    </div>
+    <div class="card-body">
+        {% for promo in recommendations.promotions %}
+        <div class="rec-card promo">
+            <h6 class="mb-1"><i class="fas fa-tag me-2 text-danger"></i>{{ promo.promotion }}</h6>
+            <p class="text-muted small mb-0">
+                Expected reach: {{ promo.expected_reach }} | Success rate: {{ promo.success_rate }}
+            </p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- High Demand & Marketing -->
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card content-card">
+            <div class="card-header"><i class="fas fa-fire me-2"></i>High-Demand Products</div>
+            <div class="card-body">
+                {% for item in recommendations.high_demand %}
+                <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                    <strong>{{ item.item }}</strong>
+                    <small class="text-muted">{{ item.insight }}</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card content-card">
+            <div class="card-header"><i class="fas fa-bullhorn me-2"></i>Marketing Strategies</div>
+            <div class="card-body">
+                {% for m in recommendations.marketing %}
+                <div class="mb-3">
+                    <h6 class="mb-1">{{ m.strategy }}</h6>
+                    <p class="text-muted small mb-0">{{ m.description }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4">
+    <a href="{{ url_for('reports.index') }}" class="btn btn-primary">
+        <i class="fas fa-file-pdf me-2"></i>Generate Report
+    </a>
+</div>
+{% endblock %}

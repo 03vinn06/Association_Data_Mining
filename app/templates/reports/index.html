@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block page_title %}Report Generation{% endblock %}
+
+{% block content %}
+<div class="card content-card">
+    <div class="card-header"><i class="fas fa-file-alt me-2"></i>Download Reports</div>
+    <div class="card-body">
+        {% if results %}
+        <p class="text-muted">Generate and download professional reports in multiple formats.</p>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Dataset</th>
+                        <th>Algorithm</th>
+                        <th>Rules</th>
+                        <th>Date</th>
+                        <th>Export</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in results %}
+                    <tr>
+                        <td><strong>{{ r.dataset.name }}</strong></td>
+                        <td><span class="badge bg-primary">{{ r.algorithm.upper() }}</span></td>
+                        <td>{{ r.num_rules }} rules</td>
+                        <td>{{ r.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            <a href="{{ url_for('reports.generate_csv', result_id=r.id) }}" class="btn btn-sm btn-outline-success me-1">
+                                <i class="fas fa-file-csv"></i> CSV
+                            </a>
+                            <a href="{{ url_for('reports.generate_excel', result_id=r.id) }}" class="btn btn-sm btn-outline-primary me-1">
+                                <i class="fas fa-file-excel"></i> Excel
+                            </a>
+                            <a href="{{ url_for('reports.generate_pdf', result_id=r.id) }}" class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-file-pdf"></i> PDF
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-file-alt fa-4x text-muted mb-3"></i>
+            <p class="text-muted">No mining results available for report generation.</p>
+            <a href="{{ url_for('rules.index') }}" class="btn btn-primary">Generate Rules First</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Association Rules{% endblock %}
+{% block page_title %}Association Rule Generation{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card content-card">
+            <div class="card-header"><i class="fas fa-project-diagram me-2"></i>Generate Association Rules</div>
+            <div class="card-body">
+                {% if datasets %}
+                <form method="POST" action="{{ url_for('rules.generate') }}">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Select Dataset</label>
+                        <select class="form-select" name="dataset_id" required>
+                            {% for ds in datasets %}
+                            <option value="{{ ds.id }}">{{ ds.name }} ({{ ds.total_transactions }} trans)</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Algorithm</label>
+                        <select class="form-select" name="algorithm">
+                            <option value="apriori">Apriori</option>
+                            <option value="fpgrowth">FP-Growth</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Min Support</label>
+                            <input type="number" class="form-control" name="min_support" value="0.20" min="0.01" max="1" step="0.01">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Min Confidence</label>
+                            <input type="number" class="form-control" name="min_confidence" value="0.50" min="0.01" max="1" step="0.01">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Min Lift</label>
+                            <input type="number" class="form-control" name="min_lift" value="1.0" min="0.1" max="10" step="0.1">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-play me-2"></i>Generate Rules
+                    </button>
+                </form>
+                {% else %}
+                <p class="text-muted text-center">No preprocessed datasets available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card content-card">
+            <div class="card-header"><i class="fas fa-book me-2"></i>Metrics Guide</div>
+            <div class="card-body small">
+                <p><strong>Support (A→B):</strong> P(A∪B) - How often A and B appear together.</p>
+                <p><strong>Confidence (A→B):</strong> P(B|A) - Probability of B given A was purchased.</p>
+                <p><strong>Lift (A→B):</strong> Confidence / P(B) - Correlation strength.</p>
+                <ul class="text-muted">
+                    <li>Lift > 1: Positive correlation</li>
+                    <li>Lift = 1: Independent</li>
+                    <li>Lift < 1: Negative correlation</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

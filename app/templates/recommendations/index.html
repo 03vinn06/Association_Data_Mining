@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Recommendations{% endblock %}
+{% block page_title %}Business Recommendations{% endblock %}
+
+{% block content %}
+<div class="card content-card">
+    <div class="card-header"><i class="fas fa-lightbulb me-2"></i>Generate Business Recommendations</div>
+    <div class="card-body">
+        {% if results %}
+        <p class="text-muted">Select a mining result to generate AI-powered business recommendations.</p>
+        <div class="list-group">
+            {% for r in results %}
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>{{ r.dataset.name }}</strong> - {{ r.algorithm.upper() }}
+                    <br><small class="text-muted">{{ r.num_rules }} rules | {{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                </div>
+                <a href="{{ url_for('recommendations.generate', result_id=r.id) }}" class="btn btn-sm btn-success">
+                    <i class="fas fa-magic me-1"></i>Generate
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <p class="text-muted">No mining results available. Generate association rules first.</p>
+            <a href="{{ url_for('rules.index') }}" class="btn btn-primary">Generate Rules</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
