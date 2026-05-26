@@ -44,7 +44,14 @@ def analyze(dataset_id):
         flash('Access denied.', 'danger')
         return redirect(url_for('eda.index'))
 
-    df = pd.read_csv(dataset.filepath)
+    # 1. Download the file data directly from your Supabase bucket
+    file_data = supabase.storage.from_('csv-uploads').download(dataset.filepath)
+    
+    # 2. Convert the byte data into an in-memory stream
+    memory_file = io.BytesIO(file_data)
+    
+    # 3. Read it into Pandas directly from memory
+    df = pd.read_csv(memory_file)
     charts_dir = current_app.config['CHARTS_FOLDER']
 
     # Parse items
