@@ -1,22 +1,19 @@
-"""
-Data Preprocessing Routes - Clean and prepare datasets for mining
-"""
+import io
+import os
+import pandas as pd
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
+from supabase import create_client, Client
 from app.models import Dataset, ActivityLog
 from app import db
-import pandas as pd
-import os
-from supabase import create_client, Client
 
-url: str = os.environ.get("SUPABASE_URL")
-key: str = os.environ.get("SUPABASE_KEY")
-supabase: Client = create_client(url, key)
-
-# ... your @bp.route('/process/1') goes below here ...
+# Initialize Supabase client
+# (If you already initialize this in app.py or extensions.py, replace these 3 lines with: from app import supabase)
+supabase_url = os.environ.get("SUPABASE_URL")
+supabase_key = os.environ.get("SUPABASE_KEY")
+supabase: Client = create_client(supabase_url, supabase_key)
 
 preprocessing_bp = Blueprint('preprocessing', __name__, url_prefix='/preprocessing')
-
 
 @preprocessing_bp.route('/')
 @login_required
@@ -25,7 +22,6 @@ def index():
     datasets = Dataset.query.filter_by(user_id=current_user.id).order_by(
         Dataset.uploaded_at.desc()).all()
     return render_template('preprocessing/index.html', datasets=datasets)
-
 
 @preprocessing_bp.route('/process/<int:dataset_id>')
 @login_required
@@ -36,8 +32,7 @@ def process(dataset_id):
         flash('Access denied.', 'danger')
         return redirect(url_for('preprocessing.index'))
 
-        # 1. Download the file data directly from your Supabase bucket
-    # Note: 'dataset.filepath' should be the path within the bucket (e.g., 'uploads/1779815642_grocery_transactions.csv')
+    # 1. Download the file data directly from your Supabase bucket
     file_data = supabase.storage.from_('csv-uploads').download(dataset.filepath)
     
     # 2. Convert the byte data into an in-memory stream
@@ -110,8 +105,20 @@ def process(dataset_id):
         'removed': 0
     })
 
-    # Save cleaned dataset
-    df.to_csv(dataset.filepath, index=False)
+    # --- THE FIX: Save cleaned dataset back to Supabase ---
+    
+    # 1. Convert the DataFrame into CSV bytes in memory
+    csv_buffer = io.BytesIO()
+    df.to_csv(csv_buffer, index=False)
+    csv_bytes = csv_buffer.getvalue()
+
+    # 2. Upload the bytes back to Supabase, overwriting the old uncleaned file
+    supabase.storage.from_('csv-uploads').upload(
+        file=csv_bytes,
+        path=dataset.filepath,
+        file_options={"upsert": "true", "content-type": "text/csv"}
+    )
+    # ------------------------------------------------------
 
     # Update dataset record
     all_items = set()
