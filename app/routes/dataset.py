@@ -67,44 +67,29 @@ def upload():
             return redirect(request.url)
 
         if file and allowed_file(file.filename):
-            # Read file bytes
-            file_bytes = file.read()
-            
-            # Upload to Supabase Storage
-            supabase = get_supabase()
-            storage_path = f'uploads/{timestamp}_{filename}'
-            supabase.storage.from_('csv-uploads').upload(
-                storage_path,
-                file_bytes,
-                {'content-type': 'text/csv'}
-            )
-            
-            # Write temp copy to /tmp for immediate processing
-            tmp_path = f'/tmp/{timestamp}_{filename}'
-            with open(tmp_path, 'wb') as f:
-                f.write(file_bytes)
-            
-            # Save storage_path (not local path) in DB
-            dataset = Dataset(
-                filepath=storage_path,  # Supabase path
-            )
-
-            # Add timestamp to avoid conflicts
             import time
+            from werkzeug.utils import secure_filename
+            
+            # 1. Setup secure filename and timestamp
+            original_filename = secure_filename(file.filename)
             timestamp = str(int(time.time()))
-            filename = f"{timestamp}_{filename}"
-            filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
+            filename = f"{timestamp}_{original_filename}"
+            
+            # 2. Save to /tmp for Vercel compatibility and Pandas validation
+            tmp_path = f'/tmp/{filename}'
+            file.save(tmp_path)
 
-            # Validate CSV
-            valid, result = validate_csv(filepath)
+            # 3. Validate CSV
+            valid, result = validate_csv(tmp_path)
             if not valid:
-                os.remove(filepath)
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
                 flash(f'Invalid CSV: {result}', 'danger')
                 return redirect(request.url)
 
             df = result
-            # Standardize column names
+
+            # 4. Standardize column names
             col_map = {}
             for col in df.columns:
                 if col.lower().strip() == 'transaction_id':
@@ -112,38 +97,60 @@ def upload():
                 elif col.lower().strip() == 'items':
                     col_map[col] = 'Items'
             df.rename(columns=col_map, inplace=True)
-            df.to_csv(filepath, index=False)
+            
+            # Save the standardized dataframe back to the temp file
+            df.to_csv(tmp_path, index=False)
 
-            # Count unique items
+            # 5. Count unique items
             all_items = set()
             for items_str in df['Items'].dropna():
                 items = [i.strip().lower() for i in str(items_str).split(',')]
                 all_items.update(items)
 
-            # Save to database
+            # 6. Upload to Supabase Storage
+            supabase = get_supabase()
+            storage_path = f'uploads/{filename}'
+            
+            try:
+                with open(tmp_path, 'rb') as f:
+                    supabase.storage.from_('csv-uploads').upload(
+                        storage_path,
+                        f.read(),
+                        {'content-type': 'text/csv'}
+                    )
+            except Exception as e:
+                flash(f'Error uploading to storage: {str(e)}', 'danger')
+                return redirect(request.url)
+
+            # 7. Save to database
             dataset = Dataset(
-                name=request.form.get('name', file.filename),
+                name=request.form.get('name', original_filename),
                 filename=filename,
-                filepath=filepath,
+                filepath=storage_path,  # Saving the Supabase path
                 total_transactions=len(df),
                 total_items=len(all_items),
                 user_id=current_user.id
             )
             db.session.add(dataset)
 
-            log = ActivityLog(user_id=current_user.id, action='Upload Dataset',
-                              details=f'Uploaded {filename} ({len(df)} transactions)')
+            log = ActivityLog(
+                user_id=current_user.id, 
+                action='Upload Dataset',
+                details=f'Uploaded {filename} ({len(df)} transactions)'
+            )
             db.session.add(log)
             db.session.commit()
 
-            flash(f'Dataset uploaded successfully! {len(df)} transactions, '
-                  f'{len(all_items)} unique items.', 'success')
+            # 8. Clean up the temp file
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+
+            flash(f'Dataset uploaded successfully! {len(df)} transactions, {len(all_items)} unique items.', 'success')
             return redirect(url_for('dataset.index'))
         else:
             flash('Only CSV files are allowed.', 'danger')
 
     return render_template('dataset/upload.html')
-
 
 @dataset_bp.route('/view/<int:dataset_id>')
 @login_required
