@@ -86,7 +86,6 @@ def upload():
             
             # Save storage_path (not local path) in DB
             dataset = Dataset(
-                ...
                 filepath=storage_path,  # Supabase path
             )
 
