@@ -64,8 +64,7 @@ def generate(dataset_id):
     # Generate frequent itemsets and rules
     frequent_itemsets = apriori(df_encoded, min_support=0.15, use_colnames=True)
     rules = association_rules(frequent_itemsets, metric="confidence",
-                              min_threshold=0.4,
-                              num_itemsets=len(frequent_itemsets))
+                          min_threshold=min_confidence)
     rules = rules.sort_values('lift', ascending=False)
 
     charts = []
