@@ -15,6 +15,13 @@ from mlxtend.frequent_patterns import apriori, association_rules
 import networkx as nx
 import json
 import os
+import io
+from supabase import create_client, Client
+# ... your other imports ...
+
+supabase_url = os.environ.get("SUPABASE_URL")
+supabase_key = os.environ.get('SUPABASE_SERVICE_KEY')
+supabase: Client = create_client(supabase_url, supabase_key)
 
 visualization_bp = Blueprint('visualization', __name__, url_prefix='/visualization')
 
@@ -38,7 +45,10 @@ def generate(dataset_id):
         flash('Access denied.', 'danger')
         return redirect(url_for('visualization.index'))
 
-    df = pd.read_csv(dataset.filepath)
+    # 1. Download the file data directly from your Supabase bucket
+    file_data = supabase.storage.from_('csv-uploads').download(dataset.filepath)
+    memory_file = io.BytesIO(file_data)
+    df = pd.read_csv(memory_file)
     charts_dir = current_app.config['CHARTS_FOLDER']
 
     # Parse transactions
