@@ -161,6 +161,7 @@ def view(dataset_id):
         flash('Access denied.', 'danger')
         return redirect(url_for('dataset.index'))
 
+    supabase = get_supabase()
     file_data = supabase.storage.from_('csv-uploads').download(dataset.filepath)
     memory_file = io.BytesIO(file_data)
     df = pd.read_csv(memory_file)
