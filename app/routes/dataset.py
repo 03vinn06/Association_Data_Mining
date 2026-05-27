@@ -7,6 +7,7 @@ from supabase import create_client
 from app.models import Dataset, ActivityLog
 from app import db
 import pandas as pd
+import io
 import os
 from werkzeug.utils import secure_filename
 
