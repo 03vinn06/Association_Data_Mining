@@ -161,7 +161,9 @@ def view(dataset_id):
         flash('Access denied.', 'danger')
         return redirect(url_for('dataset.index'))
 
-    df = pd.read_csv(dataset.filepath)
+    file_data = supabase.storage.from_('csv-uploads').download(dataset.filepath)
+    memory_file = io.BytesIO(file_data)
+    df = pd.read_csv(memory_file)
     preview = df.head(20).to_html(classes='table table-striped table-sm', index=False)
     return render_template('dataset/view.html', dataset=dataset, preview=preview,
                            total_rows=len(df))
