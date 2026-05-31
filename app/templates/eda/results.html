@@ -42,7 +42,7 @@
     <div class="col-lg-8">
         <div class="chart-container">
             <h6><i class="fas fa-chart-bar me-2"></i>Item Frequency Bar Chart</h6>
-            <img src="{{ url_for('static', filename=charts.bar) }}" alt="Bar Chart">
+            <img src="{{ url_for('static', filename='charts/eda_bar_1.png') }}" alt="Bar Chart">
             <p class="text-muted small mt-2">
                 <strong>Interpretation:</strong> Shows the most frequently purchased items.
                 Higher bars indicate items that appear in more transactions.
@@ -52,7 +52,7 @@
     <div class="col-lg-4">
         <div class="chart-container">
             <h6><i class="fas fa-chart-pie me-2"></i>Top Items Distribution</h6>
-            <img src="{{ url_for('static', filename=charts.pie) }}" alt="Pie Chart">
+            <img src="{{ url_for('static', filename='charts/eda_pie_1.png') }}" alt="Pie Chart">
             <p class="text-muted small mt-2">
                 <strong>Interpretation:</strong> Shows the proportion of top items
                 relative to each other.
@@ -65,7 +65,7 @@
     <div class="col-lg-7">
         <div class="chart-container">
             <h6><i class="fas fa-th me-2"></i>Co-occurrence Heatmap</h6>
-            <img src="{{ url_for('static', filename=charts.heatmap) }}" alt="Heatmap">
+            <img src="{{ url_for('static', filename='charts/eda_heatmap_1.png') }}" alt="Heatmap">
             <p class="text-muted small mt-2">
                 <strong>Interpretation:</strong> Darker cells indicate items that are frequently
                 purchased together. This reveals natural product associations.
