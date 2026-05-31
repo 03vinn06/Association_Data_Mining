@@ -108,7 +108,12 @@ def analyze(dataset_id):
     top_items_list = item_freq.head(10)['Item'].tolist()
     df_top = df_encoded[top_items_list]
     co_occurrence = df_top.T.dot(df_top)
-    np.fill_diagonal(co_occurrence.values, 0)
+    
+    # --- FIX: Safely update the diagonal without triggering read-only error ---
+    arr = co_occurrence.to_numpy(copy=True)
+    np.fill_diagonal(arr, 0)
+    co_occurrence.iloc[:, :] = arr
+    # -------------------------------------------------------------------------
 
     fig, ax = plt.subplots(figsize=(10, 8))
     sns.heatmap(co_occurrence, annot=True, fmt='d', cmap='YlOrRd',
