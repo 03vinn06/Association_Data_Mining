@@ -13,10 +13,10 @@
         <div class="rec-card bundle mb-3">
             <div class="d-flex justify-content-between">
                 <div>
-                    <h6 class="mb-1"><i class="fas fa-gift me-2 text-success"></i>{{ bundle.items }}</h6>
-                    <p class="text-muted small mb-0">{{ bundle.reason }}</p>
+                    <h6 class="mb-1"><i class="fas fa-gift me-2 text-success"></i>{{ bundle.items() }}</h6>
+                    <p class="text-muted small mb-0">{{ bundle.reason() }}</p>
                 </div>
-                <span class="badge bg-success h-100">Score: {{ bundle.score | round(2) }}</span>
+                <span class="badge bg-success h-100">Score: {{ bundle.score() | round(2) }}</span>
             </div>
         </div>
         {% else %}
