@@ -4,7 +4,7 @@ Dataset Management Routes - Upload, View, Delete CSV datasets
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required, current_user
 from supabase import create_client
-from app.models import Dataset, ActivityLog
+from app.models import Dataset, ActivityLog, MiningResult
 from app import db
 import pandas as pd
 import io
