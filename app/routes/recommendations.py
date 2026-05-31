@@ -4,6 +4,7 @@ Business Recommendation Engine Routes
 from flask import Blueprint, render_template, redirect, url_for, flash
 from flask_login import login_required, current_user
 from app.models import Dataset, MiningResult
+from app import db
 import json
 
 recommendations_bp = Blueprint('recommendations', __name__, url_prefix='/recommendations')
@@ -25,7 +26,7 @@ def index():
 def generate(result_id):
     """Generate business recommendations from mining results"""
     result = MiningResult.query.get_or_404(result_id)
-    dataset = session.get(Dataset, result.dataset_id)
+    dataset = db.session.get(Dataset, result.dataset_id)
     if dataset.user_id != current_user.id:
         flash('Access denied.', 'danger')
         return redirect(url_for('recommendations.index'))
